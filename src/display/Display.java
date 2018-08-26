@@ -1,15 +1,24 @@
 package display;
 
+import IO.Input;
+
 import javax.swing.JFrame;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 
 public abstract class Display {
 
     private final static Component CENTER = null;
+
+    private final static int BLUE = 0xff0000ff;
 
     private static boolean created = false;
 
@@ -17,40 +26,78 @@ public abstract class Display {
 
     private static Canvas content;
 
-    public static void create(final int width, final int height, final String title) {
+    private static BufferedImage buffer;
+
+    private static int[] bufferData;
+
+    private static Graphics bufferGraphics;
+
+    private static int clearColor;
+
+    private static BufferStrategy bufferStrategy;
+
+    public static void create(final int width, final int height, final String title, int _clearColor, int numBuffers) {
 
         if (created) {
             return;
-        } else {
-            // content settings
-            content = new Canvas() {
-                @Override
-                public void paint(Graphics graphics) {
-                    super.paint(graphics);
-                    render(graphics);
-                }
-            };
-            final Dimension size = new Dimension(width, height);
-            content.setPreferredSize(size);
-            content.setBackground(Color.BLACK);
-            // window settings
-            window = new JFrame(title);
-            window.setResizable(false);
-            window.getContentPane().add(content);
-            window.pack();
-            window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            window.setLocationRelativeTo(CENTER);
-            window.setVisible(true);
         }
+        // content settings
+        content = new Canvas();
+        final Dimension size = new Dimension(width, height);
+        content.setPreferredSize(size);
+        // window settings
+        window = new JFrame(title);
+        window.setResizable(false);
+        window.getContentPane().add(content);
+        window.pack();
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setLocationRelativeTo(CENTER);
+        window.setVisible(true);
+
+        buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        bufferData = ((DataBufferInt) buffer.getRaster().getDataBuffer()).getData();
+        bufferGraphics = buffer.getGraphics();
+        ((Graphics2D) bufferGraphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        clearColor = _clearColor;
+
+        content.createBufferStrategy(numBuffers);
+        bufferStrategy = content.getBufferStrategy();
+
+        created = true;
 
     }
 
-    public static void render() {
-        content.repaint();
+    public static void clear() {
+        Arrays.fill(bufferData, clearColor);
     }
 
-    private static void render(final Graphics graphics) {
-        graphics.setColor(Color.WHITE);
-        graphics.fillOval(400 - 50, 300 - 50, 100, 100);
+    public static void swapBuffers() {
+
+        Graphics graphics = bufferStrategy.getDrawGraphics();
+        graphics.drawImage(buffer, 0, 0, null);
+        bufferStrategy.show();
+
     }
+
+    public static Graphics2D getGraphics() {
+        return ((Graphics2D) bufferGraphics);
+    }
+
+    public static void destroy() {
+
+        if (!created) {
+            return;
+        }
+        window.dispose();
+
+    }
+
+    public static void setTitle(String title) {
+        window.setTitle(title);
+    }
+
+    public static void addInputListener(Input inputListener) {
+        window.add(inputListener);
+    }
+
 }
