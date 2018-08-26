@@ -1,5 +1,7 @@
 package graphics;
 
+import utils.Utils;
+
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
@@ -9,16 +11,17 @@ public class Sprite {
 
     private float scale;
 
+    private BufferedImage image;
+
     public Sprite(SpriteSheet sheet, float scale) {
         this.sheet = sheet;
         this.scale = scale;
+        image = sheet.getSprite(0);
+        image = Utils.resize(image, (int) (image.getWidth() * scale), (int) (image.getHeight() * scale));
     }
 
     public void render(Graphics2D graphics, float x, float y) {
-
-        BufferedImage image = sheet.getSprite(0);
-        graphics.drawImage(image, (int) (x), (int) (y), (int) (image.getWidth() * scale), (int) (image.getHeight() * scale), null);
-
+        graphics.drawImage(image, (int) (x), (int) (y), null);
     }
 
 }
